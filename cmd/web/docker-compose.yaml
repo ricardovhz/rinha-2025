@@ -1,0 +1,92 @@
+version: "3.9"
+services:
+  db:
+    image: scylladb/scylla
+    hostname: db
+    ports:
+      - "9042:9042"
+    networks:
+      - rinha-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.8"
+          memory: "225MB"
+    volumes:
+      - scylladb_data:/var/lib/scylla
+    healthcheck: # Garante que o ScyllaDB esteja pronto antes de prosseguir
+      test: ["CMD-SHELL", "cqlsh -e 'SELECT cluster_name FROM system.local;'"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+
+  dbinit:
+    image: scylladb/scylla:latest
+    container_name: scylladb-init
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - rinha-net
+    command: >
+      bash -c "
+        echo 'Aguardando ScyllaDB estar totalmente operacional...' &&
+        until cqlsh -e 'describe keyspaces;' db:9042 > /dev/null 2>&1; do
+          echo 'ScyllaDB ainda não está pronto. Tentando novamente em 5 segundos...'
+          sleep 5
+        done &&
+        echo 'ScyllaDB pronto. Executando script de inicialização...' &&
+        cqlsh -f /scylla_init.cql &&
+        echo 'Inicialização do ScyllaDB concluída.'"
+    volumes:
+      - ./scylla_init.cql:/scylla_init.cql # Mapeia seu script CQL para dentro do contêiner
+
+  api01: &api
+    image: ricardovhz/rinha-backend-2025
+    hostname: api01
+    environment:
+      - DB_HOST=db
+      - DB_PORT=9042
+      - DEFAULT_BACKEND_HOST=http://payment-processor-default:8080
+      - FALLBACK_BACKEND_HOST=http://payment-processor-fallback:8080
+    networks:
+      - payment-processor
+      - rinha-net
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "55MB"
+
+  api02:
+    <<: *api
+    hostname: api02
+
+  lb:
+    image: nginx:1.27.0-alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "9999:9999"
+    networks:
+      - payment-processor
+      - rinha-net
+    depends_on:
+      - api01
+      - api02
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: "15MB"
+
+volumes:
+  scylladb_data:
+
+networks:
+  payment-processor:
+    external: true
+  rinha-net:
+    driver: bridge
