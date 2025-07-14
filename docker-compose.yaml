@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   db:
-    image: ricardovhz/rinha-backend-2025:db
+    image: ricardovhz/rinha-2025:db
     hostname: db
     ports:
       - "3000:3000"
@@ -19,7 +19,7 @@ services:
       retries: 10
 
   api01: &api
-    image: ricardovhz/rinha-backend-2025:latest
+    image: ricardovhz/rinha-2025:latest
     hostname: api01
     environment:
       - DB_HOST=db
