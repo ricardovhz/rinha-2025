@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -88,6 +89,10 @@ func (b *backend) ProcessPayment(ctx context.Context, correlationId string, amou
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
+		if response.StatusCode == http.StatusUnprocessableEntity { // 422
+			log.Printf("Received 422 Unprocessable Entity for request: %s", correlationId)
+			return "", nil // drop the request if it's 422
+		}
 		return "", fmt.Errorf("error %d", response.StatusCode) // Handle non-200 responses as needed
 	}
 	decoder := json.NewDecoder(response.Body)

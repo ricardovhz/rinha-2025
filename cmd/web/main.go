@@ -41,8 +41,15 @@ func main() {
 	})
 	selector.Start()
 
+	workersNumber := 10
+	if envWorkers := os.Getenv("WORKERS_NUMBER"); envWorkers != "" {
+		if n, err := strconv.Atoi(envWorkers); err == nil {
+			workersNumber = n
+		}
+	}
+
 	q := internal.NewQueue()
-	w := internal.NewWorkersPool(selector, q, 10)
+	w := internal.NewWorkersPool(selector, q, workersNumber)
 	defer w.Stop()
 
 	// warm up
@@ -54,7 +61,7 @@ func main() {
 		var req internal.PaymentsRequest
 		err := c.Bind().JSON(&req)
 		if err != nil {
-			ctx.Err()
+			log.Printf("Failed to parse request: %v", err)
 			return fmt.Errorf("failed to parse request: %w", err)
 		}
 		req.RequestedAt = time.Now().Format(time.RFC3339)
@@ -78,7 +85,7 @@ func main() {
 
 		sum, err := summaryService.GetSummary(c.Context(), fromTime, toTime)
 		if err != nil {
-			fmt.Printf("Failed to get summary: %v\n", err)
+			log.Printf("Failed to get summary: %v\n", err)
 			return err
 		}
 		fmt.Printf("Summary from %s to %s: %+v %+v\n", from, to, sum.DefaultBackend, sum.FallbackBackend)

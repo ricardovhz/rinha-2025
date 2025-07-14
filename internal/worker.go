@@ -29,20 +29,10 @@ func (p *WorkersPool) start() {
 func (p *WorkersPool) worker(id int) {
 	defer p.wg.Done()
 	for req := range p.c {
-		var tries int
 		var err error
-		for tries < 2 {
-			_, err = p.backend.ProcessPayment(context.Background(), req.CorrelationId, req.Amount, time.Now().UTC())
-			if err != nil {
-				log.Printf("Error processing payment: %v, retrying...\n", err)
-				tries++
-				continue
-			} else {
-				break
-			}
-		}
+		_, err = p.backend.ProcessPayment(context.Background(), req.CorrelationId, req.Amount, time.Now().UTC())
 		if err != nil {
-			log.Printf("Failed to process payment after multiple attempts: %v\n", err)
+			log.Printf("Error processing payment: %v\n", err)
 			p.q.Enqueue(req) // Re-enqueue the request for retry
 		}
 	}

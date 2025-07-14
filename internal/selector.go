@@ -22,8 +22,13 @@ func (s *BackendSelector) ProcessPayment(ctx context.Context, correlationId stri
 
 	res, err := be.ProcessPayment(ctx, correlationId, amount, requestedAt)
 	if err != nil {
-		s.switchBackend()
-		return "", fmt.Errorf("failed to process payment: %w", err)
+		if index%2 == 0 {
+			be = s.fallbackBackend
+			res, err = be.ProcessPayment(ctx, correlationId, amount, requestedAt)
+			if err != nil {
+				return "", fmt.Errorf("failed to process payment: %w", err)
+			}
+		}
 	}
 	s.onProcessedCallback(index, amount, requestedAt)
 	return res, nil
@@ -46,10 +51,14 @@ func (s *BackendSelector) GetBackend() (PaymentBackend, int) {
 	return s.fallbackBackend.(PaymentBackend), idx
 }
 
+func (s *BackendSelector) isFallback() bool {
+	return s.selected%2 == 1
+}
+
 func (s *BackendSelector) verifyBackends(ctx context.Context) {
 	s.mtx.RLock()
 	var backend HealthBackend = s.defaultBackend
-	isFallback := s.selected%2 == 1
+	isFallback := s.isFallback()
 	failing, minResponseTime, err := backend.GetHealth(ctx)
 	s.mtx.RUnlock()
 	if err != nil || failing || minResponseTime > 1000 {
