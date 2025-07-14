@@ -1,10 +1,10 @@
 version: "3.9"
 services:
   db:
-    image: scylladb/scylla
+    image: ricardovhz/rinha-backend-2025:db
     hostname: db
     ports:
-      - "9042:9042"
+      - "3000:3000"
     networks:
       - rinha-net
     deploy:
@@ -12,37 +12,14 @@ services:
         limits:
           cpus: "0.8"
           memory: "225MB"
-    volumes:
-      - scylladb_data:/var/lib/scylla
     healthcheck: # Garante que o ScyllaDB esteja pronto antes de prosseguir
       test: ["CMD-SHELL", "cqlsh -e 'SELECT cluster_name FROM system.local;'"]
       interval: 20s
       timeout: 5s
       retries: 10
 
-  dbinit:
-    image: scylladb/scylla:latest
-    container_name: scylladb-init
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - rinha-net
-    command: >
-      bash -c "
-        echo 'Aguardando ScyllaDB estar totalmente operacional...' &&
-        until cqlsh -e 'describe keyspaces;' db:9042 > /dev/null 2>&1; do
-          echo 'ScyllaDB ainda não está pronto. Tentando novamente em 5 segundos...'
-          sleep 5
-        done &&
-        echo 'ScyllaDB pronto. Executando script de inicialização...' &&
-        cqlsh -f /scylla_init.cql &&
-        echo 'Inicialização do ScyllaDB concluída.'"
-    volumes:
-      - ./scylla_init.cql:/scylla_init.cql # Mapeia seu script CQL para dentro do contêiner
-
   api01: &api
-    image: ricardovhz/rinha-backend-2025
+    image: ricardovhz/rinha-backend-2025:latest
     hostname: api01
     environment:
       - DB_HOST=db
@@ -53,7 +30,8 @@ services:
       - payment-processor
       - rinha-net
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -81,9 +59,6 @@ services:
         limits:
           cpus: "0.2"
           memory: "15MB"
-
-volumes:
-  scylladb_data:
 
 networks:
   payment-processor:
