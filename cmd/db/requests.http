@@ -1,0 +1,11 @@
+POST http://localhost:3000/payments
+
+{
+    "backend": 0,
+    "amount": 1000,
+    "requested_at": "2025-07-01T00:00:00.000Z"
+}
+
+###
+
+GET http://localhost:3000/payments-summary?from=2025-01-01T00:00:00.000Z&to=2025-12-31T23:59:59.000Z

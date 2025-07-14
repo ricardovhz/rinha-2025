@@ -14,26 +14,6 @@ import (
 	"github.com/ricardovhz/rinha-2025/internal"
 )
 
-func parseDateTime(dateStr string) time.Time {
-	formats := []string{
-		"2006-01-02T15:04:05",
-		"2006-01-02",
-		time.RFC3339Nano,
-		"2006-01-02",
-		"2006-01-02T15:04:05Z",
-		"2006-01-02T15:04:05Z07:00",
-		"2006-01-02T15:04:05Z07:00",
-	}
-	for _, f := range formats {
-		t, err := time.Parse(f, dateStr)
-		if err == nil {
-			return t
-		}
-	}
-	fmt.Printf("Failed to parse date %s with formats %v\n", dateStr, formats)
-	return time.Time{} // Return zero value if no format matches
-}
-
 func main() {
 	// Initialize a new Fiber app
 	app := fiber.New()
@@ -56,7 +36,7 @@ func main() {
 	selector := internal.NewBackendSelector(ctx, defaultBackend, fallbackBackend, func(backend int, amount float64, requestedAt time.Time) {
 		am := fmt.Sprintf("%.2f", amount)
 		aa, _ := strconv.Atoi(strings.ReplaceAll(am, ".", ""))
-		fmt.Printf("Payment processed by backend %d: amount=%.5f (%d) at %s\n", backend, amount, aa, requestedAt)
+		// fmt.Printf("Payment processed by backend %d: amount=%.5f (%d) at %s\n", backend, amount, aa, requestedAt)
 		summaryService.AddPayment(ctx, backend, int64(aa), requestedAt)
 	})
 	selector.Start()
@@ -92,8 +72,8 @@ func main() {
 		from := query["from"]
 		to := query["to"]
 		fmt.Printf("Fetching payments summary from %s to %s\n", from, to)
-		fromTime := parseDateTime(from)
-		toTime := parseDateTime(to)
+		fromTime := internal.ParseDateTime(from)
+		toTime := internal.ParseDateTime(to)
 		time.Sleep(500 * time.Millisecond) // Simulate some processing delay
 
 		sum, err := summaryService.GetSummary(c.Context(), fromTime, toTime)
