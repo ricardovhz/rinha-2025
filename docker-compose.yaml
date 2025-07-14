@@ -12,17 +12,12 @@ services:
         limits:
           cpus: "0.8"
           memory: "225MB"
-    healthcheck: # Garante que o ScyllaDB esteja pronto antes de prosseguir
-      test: ["CMD-SHELL", "cqlsh -e 'SELECT cluster_name FROM system.local;'"]
-      interval: 20s
-      timeout: 5s
-      retries: 10
 
   api01: &api
     image: ricardovhz/rinha-2025:latest
     hostname: api01
     environment:
-      - DB_HOST=db
+      - DB_HOST=http://db:3000
       - DB_PORT=9042
       - DEFAULT_BACKEND_HOST=http://payment-processor-default:8080
       - FALLBACK_BACKEND_HOST=http://payment-processor-fallback:8080
@@ -30,8 +25,7 @@ services:
       - payment-processor
       - rinha-net
     depends_on:
-      db:
-        condition: service_healthy
+    - db
     deploy:
       resources:
         limits:
