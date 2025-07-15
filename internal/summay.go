@@ -107,7 +107,7 @@ type mysqlSummaryService struct {
 
 func (s *mysqlSummaryService) GetSummary(ctx context.Context, from, to time.Time) (*SummaryModel, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(s.summaryUrl+"?from=%s&to=%s",
-		from.Truncate(time.Second).Format(time.RFC3339Nano), to.Truncate(time.Second).Format(time.RFC3339Nano)), nil)
+		from.Format(time.RFC3339Nano), to.Format(time.RFC3339Nano)), nil)
 	if err != nil {
 		return nil, err
 	}
