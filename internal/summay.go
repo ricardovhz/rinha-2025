@@ -142,7 +142,7 @@ func (s *mysqlSummaryService) AddPayment(ctx context.Context, backend int, amoun
 	saveRequestBody := &SavePaymentRequest{
 		Backend:     backend,
 		Amount:      amount,
-		RequestedAt: requestedAt.Truncate(time.Second).Format(time.RFC3339Nano),
+		RequestedAt: requestedAt.Format(time.RFC3339Nano),
 	}
 	body, _ := json.Marshal(saveRequestBody)
 	req, err := http.NewRequestWithContext(ctx, "POST", s.addPaymentsUrl, bytes.NewBuffer(body))

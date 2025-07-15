@@ -70,7 +70,7 @@ func (b *backend) ProcessPayment(ctx context.Context, correlationId string, amou
 	jsonReq := &PaymentsRequest{
 		CorrelationId: correlationId,
 		Amount:        amount,
-		RequestedAt:   timestamp.Format(time.RFC3339),
+		RequestedAt:   timestamp.Format(time.RFC3339Nano),
 	}
 	jsonReqBytes, err := json.Marshal(jsonReq)
 	if err != nil {
