@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	db, err := sql.Open("duckdb", "")
+	db, err := sql.Open("duckdb", "./payments.db")
 	if err != nil {
 		panic(err)
 	}
