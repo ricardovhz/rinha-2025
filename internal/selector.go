@@ -27,6 +27,8 @@ func (s *BackendSelector) ProcessPayment(ctx context.Context, correlationId stri
 			res, err = be.ProcessPayment(ctx, correlationId, amount, requestedAt)
 			if err != nil {
 				return "", fmt.Errorf("failed to process payment: %w", err)
+			} else {
+				index = 1 // switch to fallback backend
 			}
 		}
 	}
