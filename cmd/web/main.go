@@ -81,7 +81,7 @@ func main() {
 		fmt.Printf("Fetching payments summary from %s to %s\n", from, to)
 		fromTime := internal.ParseDateTime(from)
 		toTime := internal.ParseDateTime(to)
-		time.Sleep(500 * time.Millisecond) // Simulate some processing delay
+		//time.Sleep(500 * time.Millisecond) // Simulate some processing delay
 
 		sum, err := summaryService.GetSummary(c.Context(), fromTime, toTime)
 		if err != nil {

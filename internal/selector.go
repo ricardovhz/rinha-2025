@@ -30,6 +30,8 @@ func (s *BackendSelector) ProcessPayment(ctx context.Context, correlationId stri
 			} else {
 				index = 1 // switch to fallback backend
 			}
+		} else {
+			return "", fmt.Errorf("failed to process payment: %w", err)
 		}
 	}
 	s.onProcessedCallback(index, amount, requestedAt)
