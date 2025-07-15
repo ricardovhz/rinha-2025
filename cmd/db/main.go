@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"os"
 
 	"github.com/gofiber/fiber/v3"
 	_ "github.com/marcboeker/go-duckdb"
@@ -10,7 +11,7 @@ import (
 
 func main() {
 
-	db, err := sql.Open("duckdb", "./payments.db")
+	db, err := sql.Open("duckdb", os.Getenv("DB_FILE"))
 	if err != nil {
 		panic(err)
 	}
